@@ -32,6 +32,40 @@ export const addBusiness = async (businessData) => {
     return `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
   try {
+    // Check for duplicates if OSM identifier exists
+    if (businessData.osm_identifier) {
+      const existingQuery = query(
+        collection(db, BUSINESSES_COLLECTION),
+        where('osm_identifier', '==', businessData.osm_identifier)
+      );
+      const existingSnapshot = await getDocs(existingQuery);
+      
+      if (!existingSnapshot.empty) {
+        // Business already exists, return existing ID
+        const existingDoc = existingSnapshot.docs[0];
+        console.log('Business already exists:', businessData.name, existingDoc.id);
+        return existingDoc.id;
+      }
+    }
+    
+    // If no OSM identifier, check by name + address for manual entries
+    if (businessData.source === 'manual' && businessData.name && businessData.address) {
+      const existingQuery = query(
+        collection(db, BUSINESSES_COLLECTION),
+        where('name', '==', businessData.name),
+        where('address', '==', businessData.address),
+        where('source', '==', 'manual')
+      );
+      const existingSnapshot = await getDocs(existingQuery);
+      
+      if (!existingSnapshot.empty) {
+        const existingDoc = existingSnapshot.docs[0];
+        console.log('Manual business already exists:', businessData.name, existingDoc.id);
+        return existingDoc.id;
+      }
+    }
+    
+    // Create new business
     const docRef = await addDoc(collection(db, BUSINESSES_COLLECTION), {
       ...businessData,
       createdAt: Timestamp.now(),

@@ -97,7 +97,7 @@ export default function SearchPanel({ onSearchResults, onLoading }) {
       const radiusMeters = Math.round(radius * 1609.34);
       const results = await searchBusinesses(city, category, radiusMeters);
       
-      // Save results to Firebase
+      // Save results to Firebase (with duplicate checking)
       const savePromises = results.map(business => 
         addBusiness({
           ...business,
@@ -110,9 +110,15 @@ export default function SearchPanel({ onSearchResults, onLoading }) {
         })
       );
       
-      await Promise.all(savePromises);
+      const savedIds = await Promise.all(savePromises);
       
-      onSearchResults(results);
+      // Map results with Firebase IDs (or existing IDs if duplicate)
+      const resultsWithIds = results.map((business, index) => ({
+        ...business,
+        id: savedIds[index] || business.osm_identifier || `search-${Date.now()}-${index}`
+      }));
+      
+      onSearchResults(resultsWithIds);
     } catch (error) {
       console.error('Search error:', error);
       onSearchResults([]);
