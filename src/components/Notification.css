@@ -1,0 +1,74 @@
+.notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: var(--surface);
+  padding: 1.125rem 1.75rem;
+  border-radius: 12px;
+  box-shadow: 
+    0 20px 25px -5px var(--shadow),
+    0 10px 10px -5px var(--shadow),
+    0 0 0 1px var(--border);
+  z-index: 2000;
+  animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  max-width: 400px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.success {
+  border-left: 4px solid var(--success);
+}
+
+.notification.error {
+  border-left: 4px solid var(--error);
+}
+
+.notification-message {
+  flex: 1;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.notification-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.notification-close:hover {
+  background: var(--surface-light);
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .notification {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    max-width: none;
+  }
+}
+
