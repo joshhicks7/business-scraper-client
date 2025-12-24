@@ -1,11 +1,11 @@
 .business-list {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 2.5rem;
+  border-radius: 20px;
+  padding: 2rem;
   box-shadow: 
-    0 20px 25px -5px var(--shadow),
-    0 10px 10px -5px var(--shadow),
+    0 20px 25px -5px rgba(0, 0, 0, 0.2),
+    0 10px 10px -5px rgba(0, 0, 0, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
 }
@@ -45,9 +45,17 @@
 .filters-section {
   background: var(--bg-dark);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.filters-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .search-box {
@@ -58,7 +66,13 @@
   background: var(--bg-darker);
   border: 2px solid var(--border);
   border-radius: 12px;
-  margin-bottom: 1.5rem;
+  flex: 1;
+  transition: all 0.2s ease;
+}
+
+.search-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .search-box input {
@@ -66,7 +80,7 @@
   background: transparent;
   border: none;
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
   font-family: inherit;
 }
@@ -75,76 +89,74 @@
   color: var(--text-muted);
 }
 
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+.clear-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
-.filter-group {
+.clear-filters-btn:hover {
+  background: var(--error);
+  border-color: var(--error);
+  color: white;
+}
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.sort-group {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
-.filter-group label {
-  font-size: 0.85rem;
+.sort-label {
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
-.filter-checkboxes {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  text-transform: none;
-  letter-spacing: normal;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: var(--primary);
-}
-
-.filter-group select {
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-darker);
+.sort-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-light);
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   outline: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  min-width: 160px;
 }
 
-.filter-group select:focus {
+.sort-select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .business-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
+  margin-top: 1rem;
 }
 
 .loading-state,
@@ -221,8 +233,29 @@
     align-items: stretch;
   }
 
-  .filters-grid {
-    grid-template-columns: 1fr;
+  .filters-header {
+    flex-direction: column;
+  }
+
+  .filters-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .filter-dropdown {
+    width: 100%;
+  }
+
+  .filter-dropdown-button {
+    width: 100%;
+  }
+
+  .sort-group {
+    width: 100%;
+  }
+
+  .sort-select {
+    width: 100%;
   }
 
   .business-grid {

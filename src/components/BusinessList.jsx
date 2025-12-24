@@ -1,7 +1,24 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Filter, Download, Search as SearchIcon } from 'lucide-react';
+import { Filter, Download, Search as SearchIcon, X } from 'lucide-react';
 import BusinessCard from './BusinessCard';
+import FilterDropdown from './FilterDropdown';
 import './BusinessList.css';
+
+// Filter options for Google Sheets-style filters
+const FILTER_OPTIONS = {
+  boolean: [
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' },
+    { value: null, label: 'Any' }
+  ],
+  status: [
+    { value: 'none', label: 'No Status' },
+    { value: 'contacted', label: 'Contacted' },
+    { value: 'creating-site', label: 'Creating Site' },
+    { value: 'scheduled-meeting', label: 'Scheduled Meeting' },
+    { value: null, label: 'Any' }
+  ]
+};
 
 export default function BusinessList({
   businesses,
@@ -13,15 +30,13 @@ export default function BusinessList({
   onFilterChange,
   allBusinesses
 }) {
+  // Default to showing only businesses without websites
   const [filters, setFilters] = useState({
-    hasWebsite: false,
-    hasPhone: false,
-    hasEmail: false,
-    hasAddress: false,
-    notContacted: false,
-    statusContacted: false,
-    statusCreatingSite: false,
-    statusScheduledMeeting: false
+    hasWebsite: false, // false = no website (default)
+    hasPhone: null,
+    hasEmail: null,
+    hasAddress: null,
+    status: null
   });
   const [sortBy, setSortBy] = useState('name-asc');
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,26 +55,37 @@ export default function BusinessList({
       );
     }
 
-    // Apply filters
+    // Apply filters (Google Sheets-style: true/false/null)
     result = result.filter(b => {
       const tracking = trackingData[b.id] || {};
       const status = tracking.status || 'none';
 
-      if (filters.hasWebsite && !b.website) return false;
-      if (filters.hasPhone && !b.phone) return false;
-      if (filters.hasEmail && !b.email) return false;
-      if (filters.hasAddress && !b.address) return false;
-      if (filters.notContacted && status !== 'none') return false;
+      // Website filter (default: false = no website)
+      if (filters.hasWebsite !== null) {
+        const hasWebsite = !!b.website;
+        if (filters.hasWebsite !== hasWebsite) return false;
+      }
 
-      const statusFilters = [
-        filters.statusContacted,
-        filters.statusCreatingSite,
-        filters.statusScheduledMeeting
-      ];
-      if (statusFilters.some(f => f)) {
-        if (filters.statusContacted && status === 'contacted') return true;
-        if (filters.statusCreatingSite && status === 'creating-site') return true;
-        if (filters.statusScheduledMeeting && status === 'scheduled-meeting') return true;
+      // Phone filter
+      if (filters.hasPhone !== null) {
+        const hasPhone = !!b.phone;
+        if (filters.hasPhone !== hasPhone) return false;
+      }
+
+      // Email filter
+      if (filters.hasEmail !== null) {
+        const hasEmail = !!b.email;
+        if (filters.hasEmail !== hasEmail) return false;
+      }
+
+      // Address filter
+      if (filters.hasAddress !== null) {
+        const hasAddress = !!b.address;
+        if (filters.hasAddress !== hasAddress) return false;
+      }
+
+      // Status filter
+      if (filters.status !== null && filters.status !== status) {
         return false;
       }
 
@@ -97,6 +123,26 @@ export default function BusinessList({
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      hasWebsite: false, // Keep default: no website
+      hasPhone: null,
+      hasEmail: null,
+      hasAddress: null,
+      status: null
+    });
+    setSearchQuery('');
+  };
+
+  const hasActiveFilters = () => {
+    return filters.hasPhone !== null ||
+           filters.hasEmail !== null ||
+           filters.hasAddress !== null ||
+           filters.status !== null ||
+           searchQuery.trim() !== '' ||
+           filters.hasWebsite !== false; // false is the default (no website), so check if changed
   };
 
   const exportCSV = () => {
@@ -175,99 +221,62 @@ export default function BusinessList({
       </div>
 
       <div className="filters-section">
-        <div className="search-box">
-          <SearchIcon size={18} />
-          <input
-            type="text"
-            placeholder="Search businesses..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="filters-header">
+          <div className="search-box">
+            <SearchIcon size={18} />
+            <input
+              type="text"
+              placeholder="Search businesses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          {hasActiveFilters() && (
+            <button className="clear-filters-btn" onClick={clearAllFilters}>
+              <X size={16} />
+              Clear Filters
+            </button>
+          )}
         </div>
 
-        <div className="filters-grid">
-          <div className="filter-group">
-            <label>
-              <Filter size={16} />
-              Filters
-            </label>
-            <div className="filter-checkboxes">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.hasWebsite}
-                  onChange={(e) => handleFilterChange('hasWebsite', e.target.checked)}
-                />
-                Has Website
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.hasPhone}
-                  onChange={(e) => handleFilterChange('hasPhone', e.target.checked)}
-                />
-                Has Phone
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.hasEmail}
-                  onChange={(e) => handleFilterChange('hasEmail', e.target.checked)}
-                />
-                Has Email
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.hasAddress}
-                  onChange={(e) => handleFilterChange('hasAddress', e.target.checked)}
-                />
-                Has Address
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.notContacted}
-                  onChange={(e) => handleFilterChange('notContacted', e.target.checked)}
-                />
-                Not Contacted
-              </label>
-            </div>
-          </div>
-
-          <div className="filter-group">
-            <label>Status Filters</label>
-            <div className="filter-checkboxes">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.statusContacted}
-                  onChange={(e) => handleFilterChange('statusContacted', e.target.checked)}
-                />
-                Contacted
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.statusCreatingSite}
-                  onChange={(e) => handleFilterChange('statusCreatingSite', e.target.checked)}
-                />
-                Creating Site
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.statusScheduledMeeting}
-                  onChange={(e) => handleFilterChange('statusScheduledMeeting', e.target.checked)}
-                />
-                Scheduled Meeting
-              </label>
-            </div>
-          </div>
-
-          <div className="filter-group">
-            <label>Sort By</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+        <div className="filters-row">
+          <FilterDropdown
+            label="Website"
+            value={filters.hasWebsite}
+            onChange={(value) => handleFilterChange('hasWebsite', value)}
+            options={FILTER_OPTIONS.boolean}
+          />
+          <FilterDropdown
+            label="Phone"
+            value={filters.hasPhone}
+            onChange={(value) => handleFilterChange('hasPhone', value)}
+            options={FILTER_OPTIONS.boolean}
+          />
+          <FilterDropdown
+            label="Email"
+            value={filters.hasEmail}
+            onChange={(value) => handleFilterChange('hasEmail', value)}
+            options={FILTER_OPTIONS.boolean}
+          />
+          <FilterDropdown
+            label="Address"
+            value={filters.hasAddress}
+            onChange={(value) => handleFilterChange('hasAddress', value)}
+            options={FILTER_OPTIONS.boolean}
+          />
+          <FilterDropdown
+            label="Status"
+            value={filters.status}
+            onChange={(value) => handleFilterChange('status', value)}
+            options={FILTER_OPTIONS.status}
+          />
+          <div className="sort-group">
+            <label className="sort-label">Sort By</label>
+            <select 
+              className="sort-select"
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value)}
+            >
               <option value="name-asc">Name (A-Z)</option>
               <option value="name-desc">Name (Z-A)</option>
               <option value="has-website">Has Website First</option>
