@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Filter, Download, Search as SearchIcon } from 'lucide-react';
 import BusinessCard from './BusinessCard';
 import './BusinessList.css';
