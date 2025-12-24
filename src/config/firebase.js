@@ -4,7 +4,7 @@ import { getAuth } from 'firebase/auth';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
 // Firebase configuration
-// You can override these with environment variables if needed (REACT_APP_ prefix for CRA)
+// You can override these with environment variables if needed (REACT_APP_ prefix)
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyAj0DnBCliJLjrzxxNBtvfO7M2cBcVNJm8",
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "businessscrap-6bc9b.firebaseapp.com",

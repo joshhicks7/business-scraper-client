@@ -91,7 +91,7 @@ export default function BusinessList({
     return result;
   }, [businesses, filters, sortBy, searchQuery, trackingData]);
 
-  useMemo(() => {
+  useEffect(() => {
     onFilterChange(filteredAndSorted);
   }, [filteredAndSorted, onFilterChange]);
 
