@@ -111,3 +111,23 @@ self.addEventListener('push', (event) => {
   );
 });
 
+// Message handler for dev tools and cache management
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CLEAR_CACHES') {
+    // Clear all caches
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => caches.delete(cacheName))
+      );
+    }).then(() => {
+      event.ports[0].postMessage({ success: true });
+    }).catch((error) => {
+      event.ports[0].postMessage({ success: false, error: error.message });
+    });
+  }
+  
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+

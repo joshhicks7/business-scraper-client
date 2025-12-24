@@ -11,9 +11,10 @@ root.render(
 );
 
 // Register service worker for PWA
-if ('serviceWorker' in navigator) {
+// Only register on http:// or https:// protocols (not file://)
+if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
       .then((registration) => {
         console.log('Service Worker registered successfully:', registration.scope);
         
@@ -29,8 +30,56 @@ if ('serviceWorker' in navigator) {
         });
       })
       .catch((error) => {
-        console.log('Service Worker registration failed:', error);
+        console.error('Service Worker registration failed:', error);
       });
   });
+  
+  // Handle service worker updates - auto-reload when new version is ready
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+  
+  // Dev helper: Clear all Service Worker caches
+  // Usage: clearSWCaches() in console
+  window.clearSWCaches = function() {
+    if (!navigator.serviceWorker.controller) {
+      console.log('No active service worker found');
+      return Promise.resolve();
+    }
+    
+    return new Promise((resolve, reject) => {
+      const messageChannel = new MessageChannel();
+      messageChannel.port1.onmessage = (event) => {
+        if (event.data.success) {
+          console.log('✓ All Service Worker caches cleared');
+          resolve();
+        } else {
+          console.error('Failed to clear caches');
+          reject(new Error('Failed to clear caches'));
+        }
+      };
+      
+      navigator.serviceWorker.controller.postMessage(
+        { type: 'CLEAR_CACHES' },
+        [messageChannel.port2]
+      );
+    });
+  };
+  
+  // Dev helper: Force service worker to skip waiting and activate
+  // Usage: forceSWUpdate() in console
+  window.forceSWUpdate = function() {
+    if (!navigator.serviceWorker.controller) {
+      console.log('No active service worker found');
+      return;
+    }
+    
+    navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+    console.log('Service worker skip waiting requested');
+  };
 }
 
