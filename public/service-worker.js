@@ -37,7 +37,8 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  return self.clients.claim();
+  // Removed clients.claim() to prevent reload loops
+  // The service worker will still work, but won't take control immediately
 });
 
 // Fetch event - serve from cache, fallback to network

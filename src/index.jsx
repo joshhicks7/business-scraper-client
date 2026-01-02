@@ -12,7 +12,7 @@ root.render(
 
 // Register service worker for PWA
 // Only register on http:// or https:// protocols (not file://)
-if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
+if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
       .then((registration) => {
@@ -35,13 +35,22 @@ if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.p
   });
   
   // Handle service worker updates - auto-reload when new version is ready
+  // Disabled during development to prevent reload loops
+  // Uncomment and use in production if you want automatic updates
+  /*
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
+    if (!refreshing && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then((registration) => {
+        // Only reload if there's a waiting service worker (actual update scenario)
+        if (registration.waiting) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
     }
   });
+  */
   
   // Dev helper: Clear all Service Worker caches
   // Usage: clearSWCaches() in console

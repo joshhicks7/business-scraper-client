@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search as SearchIcon, MapPin, Filter } from 'lucide-react';
 import { searchBusinesses } from '../services/apiService';
-import { addBusiness } from '../services/firebaseService';
+import SearchableSelect from './SearchableSelect';
 import './SearchPanel.css';
 
 const CATEGORIES = {
@@ -14,6 +14,7 @@ const CATEGORIES = {
   roofer: '🏠 Roofer',
   locksmith: '🔐 Locksmith',
   handyman: '🔨 Handyman',
+  construction: '🏗️ Construction',
   restaurant: '🍽️ Restaurant',
   cafe: '☕ Cafe',
   fast_food: '🍔 Fast Food',
@@ -97,25 +98,15 @@ export default function SearchPanel({ onSearchResults, onLoading }) {
       const radiusMeters = Math.round(radius * 1609.34);
       const results = await searchBusinesses(city, category, radiusMeters);
       
-      // Save results to Firebase (with duplicate checking)
-      const savePromises = results.map(business => 
-        addBusiness({
-          ...business,
-          category,
-          city,
-          searchRadius: radius
-        }).catch(err => {
-          console.error('Error saving business to Firebase:', err);
-          return null;
-        })
-      );
-      
-      const savedIds = await Promise.all(savePromises);
-      
-      // Map results with Firebase IDs (or existing IDs if duplicate)
+      // Map results with temporary IDs (not saved to database yet)
       const resultsWithIds = results.map((business, index) => ({
         ...business,
-        id: savedIds[index] || business.osm_identifier || `search-${Date.now()}-${index}`
+        id: business.osm_identifier || `search-${Date.now()}-${index}`,
+        category,
+        city,
+        searchRadius: radius,
+        source: 'osm',
+        isSaved: false // Mark as unsaved
       }));
       
       onSearchResults(resultsWithIds);
@@ -153,18 +144,19 @@ export default function SearchPanel({ onSearchResults, onLoading }) {
               <Filter size={18} />
               Business Category
             </label>
-            <select
+            <SearchableSelect
               id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               disabled={searching}
-            >
-              {Object.entries(CATEGORIES).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              options={Object.entries(CATEGORIES)
+                .map(([key, label]) => ({
+                  value: key,
+                  label: label
+                }))
+                .sort((a, b) => a.label.localeCompare(b.label))}
+              placeholder="Select category..."
+            />
           </div>
 
           <div className="form-group radius-group">

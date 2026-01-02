@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { addBusiness } from '../services/firebaseService';
+import SearchableSelect from './SearchableSelect';
+import WebsiteList from './WebsiteList';
 import './CreateBusinessModal.css';
 
 const CATEGORIES = {
@@ -13,6 +15,7 @@ const CATEGORIES = {
   roofer: '🏠 Roofer',
   locksmith: '🔐 Locksmith',
   handyman: '🔨 Handyman',
+  construction: '🏗️ Construction',
   restaurant: '🍽️ Restaurant',
   cafe: '☕ Cafe',
   fast_food: '🍔 Fast Food',
@@ -82,7 +85,8 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
     address: '',
     phone: '',
     email: '',
-    website: '',
+    websites: [],
+    demos: [],
     city: '',
     state: '',
     zipCode: '',
@@ -113,9 +117,19 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
       newErrors.email = 'Invalid email address';
     }
 
-    if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
-      newErrors.website = 'Website must start with http:// or https://';
-    }
+    // Validate all websites
+    formData.websites.forEach((website, index) => {
+      if (website && !/^https?:\/\/.+/.test(website)) {
+        newErrors[`website_${index}`] = 'Website must start with http:// or https://';
+      }
+    });
+
+    // Validate all demos
+    formData.demos.forEach((demo, index) => {
+      if (demo && !/^https?:\/\/.+/.test(demo)) {
+        newErrors[`demo_${index}`] = 'Demo must start with http:// or https://';
+      }
+    });
 
     if (formData.latitude && (isNaN(formData.latitude) || formData.latitude < -90 || formData.latitude > 90)) {
       newErrors.latitude = 'Latitude must be between -90 and 90';
@@ -152,7 +166,8 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
         address: fullAddress || formData.address,
         phone: formData.phone.trim() || null,
         email: formData.email.trim() || null,
-        website: formData.website.trim() || null,
+        websites: formData.websites.length > 0 ? formData.websites : null,
+        demos: formData.demos.length > 0 ? formData.demos : null,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         opening_hours: formData.opening_hours.trim() || null,
@@ -208,18 +223,18 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
 
               <div className="form-group">
                 <label htmlFor="category">Category</label>
-                <select
+                <SearchableSelect
                   id="category"
-                  name="category"
                   value={formData.category}
-                  onChange={handleChange}
-                >
-                  {Object.entries(CATEGORIES).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(e) => handleChange({ target: { name: 'category', value: e.target.value } })}
+                  options={Object.entries(CATEGORIES)
+                    .map(([key, label]) => ({
+                      value: key,
+                      label: label
+                    }))
+                    .sort((a, b) => a.label.localeCompare(b.label))}
+                  placeholder="Select category..."
+                />
               </div>
             </div>
           </div>
@@ -253,16 +268,21 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
               </div>
 
               <div className="form-group full-width">
-                <label htmlFor="website">Website</label>
-                <input
-                  type="url"
-                  id="website"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleChange}
+                <WebsiteList
+                  websites={formData.websites}
+                  onChange={(websites) => setFormData(prev => ({ ...prev, websites }))}
                   placeholder="https://example.com"
+                  label="Business Websites"
                 />
-                {errors.website && <span className="error-text">{errors.website}</span>}
+              </div>
+
+              <div className="form-group full-width">
+                <WebsiteList
+                  websites={formData.demos}
+                  onChange={(demos) => setFormData(prev => ({ ...prev, demos }))}
+                  placeholder="https://demo.example.com"
+                  label="Demos"
+                />
               </div>
             </div>
           </div>
@@ -389,4 +409,5 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
     </div>
   );
 }
+
 

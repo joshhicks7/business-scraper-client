@@ -28,3 +28,4 @@ You need to create two icon files for the PWA:
 - Test on both light and dark backgrounds
 - Keep important elements in the center (safe area)
 
+

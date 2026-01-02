@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Phone, Mail, Globe, MapPin, Trash2, Save, Calendar } from 'lucide-react';
 import { updateBusiness, deleteBusiness, saveTrackingData } from '../services/firebaseService';
 import { format } from 'date-fns';
+import WebsiteList from './WebsiteList';
 import './BusinessModal.css';
 
 export default function BusinessModal({
@@ -13,13 +14,40 @@ export default function BusinessModal({
 }) {
   const [status, setStatus] = useState(trackingData?.status || 'none');
   const [notes, setNotes] = useState(trackingData?.notes || '');
+  const [websites, setWebsites] = useState(() => {
+    // Handle backward compatibility - convert single website to array
+    if (business?.websites) return Array.isArray(business.websites) ? business.websites : [business.websites];
+    if (business?.website) return [business.website];
+    return [];
+  });
+  const [demos, setDemos] = useState(() => {
+    // Handle backward compatibility - convert single demo to array
+    if (business?.demos) return Array.isArray(business.demos) ? business.demos : [business.demos];
+    if (business?.our_website) return [business.our_website];
+    return [];
+  });
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     setStatus(trackingData?.status || 'none');
     setNotes(trackingData?.notes || '');
-  }, [trackingData]);
+    // Update websites and demos when business changes
+    if (business?.websites) {
+      setWebsites(Array.isArray(business.websites) ? business.websites : [business.websites]);
+    } else if (business?.website) {
+      setWebsites([business.website]);
+    } else {
+      setWebsites([]);
+    }
+    if (business?.demos) {
+      setDemos(Array.isArray(business.demos) ? business.demos : [business.demos]);
+    } else if (business?.our_website) {
+      setDemos([business.our_website]);
+    } else {
+      setDemos([]);
+    }
+  }, [trackingData, business]);
 
   const handleSave = async () => {
     if (!business.id) return;
@@ -34,12 +62,14 @@ export default function BusinessModal({
       });
 
       // Update business if needed
-      const updatedBusiness = { ...business };
+      const updatedBusiness = { ...business, websites, demos };
       if (business.id.startsWith('search-')) {
-        // This is a search result, save it to Firebase first
+        // This is a search result, save it to database first
         // For now, just update tracking
       } else {
         await updateBusiness(business.id, {
+          websites: websites.length > 0 ? websites : null,
+          demos: demos.length > 0 ? demos : null,
           updatedAt: new Date()
         });
       }
@@ -117,17 +147,43 @@ export default function BusinessModal({
                 </div>
               )}
 
-              {business.website && (
-                <div className="detail-item">
-                  <Globe size={18} />
-                  <div>
-                    <label>Website</label>
-                    <a href={business.website} target="_blank" rel="noopener noreferrer">
-                      {business.website}
-                    </a>
+              {(() => {
+                // Handle backward compatibility
+                const businessWebsites = business?.websites 
+                  ? (Array.isArray(business.websites) ? business.websites : [business.websites])
+                  : (business?.website ? [business.website] : []);
+                
+                return businessWebsites.length > 0 && businessWebsites.map((website, index) => (
+                  <div key={index} className="detail-item">
+                    <Globe size={18} />
+                    <div>
+                      <label>{index === 0 ? 'Business Website' : `Website ${index + 1}`}</label>
+                      <a href={website} target="_blank" rel="noopener noreferrer">
+                        {website}
+                      </a>
+                    </div>
                   </div>
-                </div>
-              )}
+                ));
+              })()}
+
+              {(() => {
+                // Handle backward compatibility
+                const businessDemos = business?.demos 
+                  ? (Array.isArray(business.demos) ? business.demos : [business.demos])
+                  : (business?.our_website ? [business.our_website] : []);
+                
+                return businessDemos.length > 0 && businessDemos.map((demo, index) => (
+                  <div key={index} className="detail-item">
+                    <Globe size={18} />
+                    <div>
+                      <label>{index === 0 ? 'Demo' : `Demo ${index + 1}`}</label>
+                      <a href={demo} target="_blank" rel="noopener noreferrer">
+                        {demo}
+                      </a>
+                    </div>
+                  </div>
+                ));
+              })()}
 
               {business.opening_hours && (
                 <div className="detail-item">
@@ -222,6 +278,24 @@ export default function BusinessModal({
                   rows={4}
                 />
               </div>
+
+              <div className="notes-group">
+                <WebsiteList
+                  websites={websites}
+                  onChange={setWebsites}
+                  placeholder="https://example.com"
+                  label="Business Websites"
+                />
+              </div>
+
+              <div className="notes-group">
+                <WebsiteList
+                  websites={demos}
+                  onChange={setDemos}
+                  placeholder="https://demo.example.com"
+                  label="Demos"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -274,4 +348,5 @@ export default function BusinessModal({
     </div>
   );
 }
+
 

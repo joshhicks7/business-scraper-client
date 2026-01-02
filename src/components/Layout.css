@@ -1,9 +1,4 @@
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
+/* Layout-specific styles override App.css */
 .app-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -16,9 +11,6 @@
 }
 
 .app-header .container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -35,6 +27,15 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.app-title:hover {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .app-title .icon {
@@ -44,107 +45,72 @@
 
 .app-nav {
   display: flex;
-  gap: 0.75rem;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .nav-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.625rem 1.25rem;
   background: var(--surface-light);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 8px;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   font-family: inherit;
 }
 
 .nav-btn:hover {
   background: var(--surface);
   border-color: var(--primary);
-  transform: translateY(-2px);
+  color: var(--primary);
+  transform: translateY(-1px);
 }
 
 .nav-btn.active {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  border-color: transparent;
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 
+.nav-btn.active:hover {
+  background: var(--primary-light);
+  color: white;
+  transform: translateY(-1px);
+}
+
 .nav-btn.primary {
-  background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
-  border-color: transparent;
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 
 .nav-btn.primary:hover {
-  box-shadow: 0 8px 20px 0 rgba(16, 185, 129, 0.4);
-}
-
-.app-main {
-  flex: 1;
-  padding: 2rem 0;
-}
-
-.app-main .container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  gap: 1.5rem;
-}
-
-.page-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-}
-
-.page-header p {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  margin: 0;
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  color: white;
 }
 
 @media (max-width: 768px) {
   .app-header .container {
     flex-direction: column;
-    padding: 0 1rem;
+    gap: 1rem;
   }
 
   .app-nav {
     width: 100%;
-    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .nav-btn {
     flex: 1;
-    min-width: 120px;
     justify-content: center;
-  }
-
-  .app-main .container {
-    padding: 0 1rem;
-  }
-
-  .page-header {
-    flex-direction: column;
-  }
-
-  .page-header h1 {
-    font-size: 1.5rem;
   }
 }
 

@@ -1,0 +1,121 @@
+.website-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.website-list-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.website-list-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.website-list-input {
+  flex: 1;
+  padding: 0.875rem;
+  background: var(--bg-dark);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.website-list-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.website-list-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem;
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.website-list-add-btn:hover {
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+.website-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.website-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-darker);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.website-list-item:hover {
+  background: var(--surface-light);
+  border-color: var(--primary);
+}
+
+.website-list-item svg:first-child {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.website-list-link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  word-break: break-all;
+  transition: color 0.2s ease;
+}
+
+.website-list-link:hover {
+  color: var(--primary-light);
+  text-decoration: underline;
+}
+
+.website-list-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.website-list-remove-btn:hover {
+  background: var(--error);
+  color: white;
+}
+

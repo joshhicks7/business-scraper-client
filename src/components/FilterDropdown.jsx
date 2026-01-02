@@ -1,15 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X, Search } from 'lucide-react';
 import './FilterDropdown.css';
 
 export default function FilterDropdown({ label, value, onChange, options = [] }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
+        setSearchQuery('');
       }
     };
 
@@ -17,10 +20,28 @@ export default function FilterDropdown({ label, value, onChange, options = [] })
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    // Focus search input when dropdown opens
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+    } else {
+      setSearchQuery('');
+    }
+  }, [isOpen]);
+
   const handleSelect = (optionValue) => {
     onChange(optionValue);
     setIsOpen(false);
+    setSearchQuery('');
   };
+
+  const filteredOptions = options.filter(option => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return option.label.toLowerCase().includes(query);
+  });
 
   const handleClear = (e) => {
     e.stopPropagation();
@@ -54,18 +75,41 @@ export default function FilterDropdown({ label, value, onChange, options = [] })
       </button>
       {isOpen && (
         <div className="filter-dropdown-menu">
-          {options.map((option) => (
-            <button
-              key={option.value}
-              className={`filter-option ${value === option.value ? 'selected' : ''}`}
-              onClick={() => handleSelect(option.value)}
-            >
-              <span className="filter-option-label">{option.label}</span>
-              {value === option.value && (
-                <span className="filter-option-check">✓</span>
-              )}
-            </button>
-          ))}
+          <div className="filter-search">
+            <Search size={16} />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setIsOpen(false);
+                  setSearchQuery('');
+                }
+              }}
+            />
+          </div>
+          <div className="filter-options-list">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <button
+                  key={option.value}
+                  className={`filter-option ${value === option.value ? 'selected' : ''}`}
+                  onClick={() => handleSelect(option.value)}
+                >
+                  <span className="filter-option-label">{option.label}</span>
+                  {value === option.value && (
+                    <span className="filter-option-check">✓</span>
+                  )}
+                </button>
+              ))
+            ) : (
+              <div className="filter-no-results">No results found</div>
+            )}
+          </div>
         </div>
       )}
     </div>

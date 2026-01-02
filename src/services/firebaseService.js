@@ -129,6 +129,25 @@ export const getAllBusinesses = async () => {
   }
 };
 
+export const getBusiness = async (businessId) => {
+  if (!isFirebaseAvailable()) {
+    return null;
+  }
+  try {
+    const businessDoc = await getDoc(doc(db, BUSINESSES_COLLECTION, businessId));
+    if (businessDoc.exists()) {
+      return {
+        id: businessDoc.id,
+        ...businessDoc.data()
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching business:', error);
+    throw error;
+  }
+};
+
 export const searchBusinesses = async (filters = {}) => {
   if (!isFirebaseAvailable()) {
     return [];

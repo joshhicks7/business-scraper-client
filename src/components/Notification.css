@@ -38,6 +38,10 @@
   border-left: 4px solid var(--error);
 }
 
+.notification.info {
+  border-left: 4px solid var(--primary);
+}
+
 .notification-message {
   flex: 1;
   color: var(--text-primary);
@@ -71,4 +75,5 @@
     max-width: none;
   }
 }
+
 
