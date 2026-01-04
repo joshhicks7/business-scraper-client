@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Database, Search, Plus } from 'lucide-react';
+import { Database, Search, BarChart3 } from 'lucide-react';
 import './Layout.css';
 
 export default function Layout({ children }) {
@@ -27,6 +27,13 @@ export default function Layout({ children }) {
             >
               <Search size={20} />
               Search
+            </Link>
+            <Link
+              to="/stats"
+              className={`nav-btn ${location.pathname === '/stats' ? 'active' : ''}`}
+            >
+              <BarChart3 size={20} />
+              Stats
             </Link>
           </nav>
         </div>

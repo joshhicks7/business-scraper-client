@@ -24,6 +24,7 @@ const isFirebaseAvailable = () => {
 
 const BUSINESSES_COLLECTION = 'businesses';
 const TRACKING_COLLECTION = 'tracking';
+const TIMELINE_COLLECTION = 'timeline';
 
 // Business operations
 export const addBusiness = async (businessData) => {
@@ -251,6 +252,104 @@ export const getAllTrackingData = async () => {
     return trackingMap;
   } catch (error) {
     console.error('Error fetching all tracking data:', error);
+    throw error;
+  }
+};
+
+// Timeline operations
+export const addTimelineEvent = async (businessId, eventData) => {
+  if (!isFirebaseAvailable()) {
+    console.warn('Firebase not available, timeline event not persisted');
+    return null;
+  }
+  try {
+    const docRef = await addDoc(collection(db, TIMELINE_COLLECTION), {
+      businessId,
+      ...eventData,
+      createdAt: Timestamp.now()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding timeline event:', error);
+    throw error;
+  }
+};
+
+export const getTimelineEvents = async (businessId) => {
+  if (!isFirebaseAvailable()) {
+    return [];
+  }
+  try {
+    const timelineQuery = query(
+      collection(db, TIMELINE_COLLECTION),
+      where('businessId', '==', businessId),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(timelineQuery);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    // Check if it's an index error
+    if (error.code === 'failed-precondition' || error.message?.includes('index')) {
+      console.error('Firestore index required. Please create the index:', error);
+      // Fallback: query without orderBy and sort in memory
+      try {
+        const fallbackQuery = query(
+          collection(db, TIMELINE_COLLECTION),
+          where('businessId', '==', businessId)
+        );
+        const fallbackSnapshot = await getDocs(fallbackQuery);
+        const events = fallbackSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        // Sort by createdAt in memory (descending)
+        return events.sort((a, b) => {
+          const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+          const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+          return bDate - aDate;
+        });
+      } catch (fallbackError) {
+        console.error('Fallback query also failed:', fallbackError);
+        throw error; // Throw original error
+      }
+    }
+    console.error('Error fetching timeline events:', error);
+    throw error;
+  }
+};
+
+export const deleteTimelineEvent = async (eventId) => {
+  if (!isFirebaseAvailable()) {
+    console.warn('Firebase not available, delete not persisted');
+    return;
+  }
+  try {
+    await deleteDoc(doc(db, TIMELINE_COLLECTION, eventId));
+  } catch (error) {
+    console.error('Error deleting timeline event:', error);
+    throw error;
+  }
+};
+
+export const getAllTimelineEvents = async () => {
+  if (!isFirebaseAvailable()) {
+    return [];
+  }
+  try {
+    const timelineQuery = query(
+      collection(db, TIMELINE_COLLECTION),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(timelineQuery);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error fetching all timeline events:', error);
     throw error;
   }
 };

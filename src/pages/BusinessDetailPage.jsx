@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Phone, Mail, Globe, MapPin, Trash2, Save, Calendar } from 'lucide-react';
-import { getBusiness, updateBusiness, deleteBusiness, saveTrackingData, getTrackingData } from '../services/firebaseService';
+import { ArrowLeft, Phone, Mail, Globe, MapPin, Trash2, Save, Calendar, Plus } from 'lucide-react';
+import { getBusiness, updateBusiness, deleteBusiness, saveTrackingData, getTrackingData, getTimelineEvents, addTimelineEvent, deleteTimelineEvent } from '../services/firebaseService';
 import { format } from 'date-fns';
 import WebsiteList from '../components/WebsiteList';
 import Notification from '../components/Notification';
+import Timeline from '../components/Timeline';
+import AddEventModal from '../components/AddEventModal';
 import './BusinessDetailPage.css';
 
 export default function BusinessDetailPage() {
@@ -16,9 +18,11 @@ export default function BusinessDetailPage() {
   const [notes, setNotes] = useState('');
   const [websites, setWebsites] = useState([]);
   const [demos, setDemos] = useState([]);
+  const [timelineEvents, setTimelineEvents] = useState([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
@@ -43,6 +47,20 @@ export default function BusinessDetailPage() {
       setTrackingData(tracking);
       setStatus(tracking?.status || 'none');
       setNotes(tracking?.notes || '');
+
+      // Load timeline events (don't fail if this errors)
+      try {
+        const events = await getTimelineEvents(id);
+        setTimelineEvents(events);
+      } catch (timelineError) {
+        console.error('Error loading timeline events:', timelineError);
+        // Set empty array so page still loads
+        setTimelineEvents([]);
+        // Only show notification if it's not an index error (index errors are handled silently with fallback)
+        if (!timelineError.message?.includes('index') && timelineError.code !== 'failed-precondition') {
+          showNotification('Failed to load timeline events', 'error');
+        }
+      }
 
       // Set websites and demos
       if (foundBusiness.websites) {
@@ -120,6 +138,40 @@ export default function BusinessDetailPage() {
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleAddEvent = async (eventData) => {
+    if (!business?.id) return;
+
+    setSaving(true);
+    try {
+      await addTimelineEvent(business.id, eventData);
+      const events = await getTimelineEvents(business.id);
+      setTimelineEvents(events);
+      showNotification('Event added successfully!', 'success');
+    } catch (error) {
+      console.error('Error adding event:', error);
+      showNotification('Failed to add event', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (!business?.id) return;
+
+    setSaving(true);
+    try {
+      await deleteTimelineEvent(eventId);
+      const events = await getTimelineEvents(business.id);
+      setTimelineEvents(events);
+      showNotification('Event deleted successfully!', 'success');
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      showNotification('Failed to delete event', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -277,71 +329,29 @@ export default function BusinessDetailPage() {
         </div>
 
         <div className="detail-section">
-          <h3 className="section-title">Tracking & Notes</h3>
+          <div className="section-header-with-action">
+            <h3 className="section-title">Timeline</h3>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowAddEventModal(true)}
+              disabled={saving}
+            >
+              <Plus size={18} />
+              Add Event
+            </button>
+          </div>
+          <div className="timeline-section">
+            <Timeline
+              events={timelineEvents}
+              onDeleteEvent={handleDeleteEvent}
+              canDelete={!business.id.startsWith('search-')}
+            />
+          </div>
+        </div>
+
+        <div className="detail-section">
+          <h3 className="section-title">Websites & Demos</h3>
           <div className="tracking-section">
-            <div className="status-group">
-              <label>Status</label>
-              <div className="status-options">
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="none"
-                    checked={status === 'none'}
-                    onChange={(e) => setStatus(e.target.value)}
-                  />
-                  <span>No Status</span>
-                </label>
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="contacted"
-                    checked={status === 'contacted'}
-                    onChange={(e) => setStatus(e.target.value)}
-                  />
-                  <span>✓ Contacted</span>
-                </label>
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="creating-site"
-                    checked={status === 'creating-site'}
-                    onChange={(e) => setStatus(e.target.value)}
-                  />
-                  <span>🚀 Creating Site</span>
-                </label>
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="scheduled-meeting"
-                    checked={status === 'scheduled-meeting'}
-                    onChange={(e) => setStatus(e.target.value)}
-                  />
-                  <span>📅 Scheduled Meeting</span>
-                </label>
-              </div>
-            </div>
-
-            {trackingData?.updatedAt && (
-              <div className="tracking-date">
-                Last updated: {format(trackingData.updatedAt.toDate(), 'PPp')}
-              </div>
-            )}
-
-            <div className="notes-group">
-              <label htmlFor="notes">Notes</label>
-              <textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add notes about this business..."
-                rows={4}
-              />
-            </div>
-
             <div className="notes-group">
               <WebsiteList
                 websites={websites}
@@ -377,6 +387,15 @@ export default function BusinessDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showAddEventModal && (
+        <AddEventModal
+          isOpen={showAddEventModal}
+          onClose={() => setShowAddEventModal(false)}
+          onSave={handleAddEvent}
+          businessPhone={business?.phone}
+        />
       )}
 
       {notification && (
