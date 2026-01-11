@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Phone, Mail, Globe, MapPin, Trash2, Save, Calendar, Plus } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, Globe, MapPin, Trash2, Save, Calendar, Plus, User } from 'lucide-react';
 import { getBusiness, updateBusiness, deleteBusiness, saveTrackingData, getTrackingData, getTimelineEvents, addTimelineEvent, deleteTimelineEvent } from '../services/firebaseService';
 import { format } from 'date-fns';
 import WebsiteList from '../components/WebsiteList';
 import Notification from '../components/Notification';
 import Timeline from '../components/Timeline';
 import AddEventModal from '../components/AddEventModal';
+import SearchableSelect from '../components/SearchableSelect';
+import { CATEGORIES } from '../utils/categories';
 import './BusinessDetailPage.css';
 
 export default function BusinessDetailPage() {
@@ -24,6 +26,18 @@ export default function BusinessDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [notification, setNotification] = useState(null);
+  
+  // Editable business fields
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [openingHours, setOpeningHours] = useState('');
 
   useEffect(() => {
     loadBusiness();
@@ -41,6 +55,36 @@ export default function BusinessDetailPage() {
       }
 
       setBusiness(foundBusiness);
+      
+      // Set editable fields
+      setName(foundBusiness.name || '');
+      setCategory(foundBusiness.category || '');
+      setPhone(foundBusiness.phone || '');
+      setEmail(foundBusiness.email || '');
+      setOwnerName(foundBusiness.owner_name || foundBusiness.ownerName || '');
+      
+      // Parse address if it's a string
+      if (foundBusiness.address) {
+        const addressParts = foundBusiness.address.split(',').map(s => s.trim());
+        if (addressParts.length >= 4) {
+          setAddress(addressParts[0]);
+          setCity(addressParts[1]);
+          setState(addressParts[2]);
+          setZipCode(addressParts[3]);
+        } else if (addressParts.length === 3) {
+          setAddress(addressParts[0]);
+          setCity(addressParts[1]);
+          setState(addressParts[2]);
+        } else {
+          setAddress(foundBusiness.address);
+        }
+      }
+      
+      // Set individual address fields if they exist
+      if (foundBusiness.city) setCity(foundBusiness.city);
+      if (foundBusiness.state) setState(foundBusiness.state);
+      if (foundBusiness.zipCode || foundBusiness.zip_code) setZipCode(foundBusiness.zipCode || foundBusiness.zip_code);
+      setOpeningHours(foundBusiness.opening_hours || '');
       
       // Load tracking data
       const tracking = await getTrackingData(id);
@@ -100,7 +144,25 @@ export default function BusinessDetailPage() {
 
       // Update business
       if (!business.id.startsWith('search-')) {
+        // Build full address
+        const addressParts = [];
+        if (address) addressParts.push(address);
+        if (city) addressParts.push(city);
+        if (state) addressParts.push(state);
+        if (zipCode) addressParts.push(zipCode);
+        const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : null;
+        
         await updateBusiness(business.id, {
+          name: name.trim() || business.name,
+          category: category || business.category,
+          phone: phone.trim() || null,
+          email: email.trim() || null,
+          owner_name: ownerName.trim() || null,
+          address: fullAddress || address || business.address,
+          city: city.trim() || null,
+          state: state.trim() || null,
+          zipCode: zipCode.trim() || null,
+          opening_hours: openingHours.trim() || null,
           websites: websites.length > 0 ? websites : null,
           demos: demos.length > 0 ? demos : null,
           updatedAt: new Date()
@@ -232,99 +294,160 @@ export default function BusinessDetailPage() {
 
       <div className="business-detail-content">
         <div className="detail-section">
-          <h1 className="business-name">{business.name || 'Unknown Business'}</h1>
-          <div className="detail-grid">
-            {business.address && (
-              <div className="detail-item">
-                <MapPin size={18} />
-                <div>
-                  <label>Address</label>
-                  <p>{business.address}</p>
-                </div>
+          <h3 className="section-title">Basic Information</h3>
+          <div className="tracking-section">
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Business Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Business Name"
+                  disabled={business.id.startsWith('search-')}
+                />
               </div>
-            )}
 
-            {business.phone && (
-              <div className="detail-item">
-                <Phone size={18} />
-                <div>
-                  <label>Phone</label>
-                  <a href={`tel:${business.phone}`}>{business.phone}</a>
-                </div>
+              <div className="form-group">
+                <label>Category</label>
+                <SearchableSelect
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  options={Object.entries(CATEGORIES)
+                    .map(([key, label]) => ({
+                      value: key,
+                      label: label
+                    }))
+                    .sort((a, b) => a.label.localeCompare(b.label))}
+                  placeholder="Select category..."
+                  disabled={business.id.startsWith('search-')}
+                />
               </div>
-            )}
 
-            {business.email && (
-              <div className="detail-item">
-                <Mail size={18} />
-                <div>
-                  <label>Email</label>
-                  <a href={`mailto:${business.email}`}>{business.email}</a>
-                </div>
+              <div className="form-group">
+                <label>Owner Name</label>
+                <input
+                  type="text"
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  placeholder="Owner Name"
+                  disabled={business.id.startsWith('search-')}
+                />
               </div>
-            )}
+            </div>
+          </div>
+        </div>
 
-            {(() => {
-              const businessWebsites = business?.websites 
-                ? (Array.isArray(business.websites) ? business.websites : [business.websites])
-                : (business?.website ? [business.website] : []);
-              
-              return businessWebsites.length > 0 && businessWebsites.map((website, index) => (
-                <div key={index} className="detail-item">
-                  <Globe size={18} />
-                  <div>
-                    <label>{index === 0 ? 'Business Website' : `Website ${index + 1}`}</label>
-                    <a href={website} target="_blank" rel="noopener noreferrer">
-                      {website}
-                    </a>
-                  </div>
-                </div>
-              ));
-            })()}
-
-            {(() => {
-              const businessDemos = business?.demos 
-                ? (Array.isArray(business.demos) ? business.demos : [business.demos])
-                : (business?.our_website ? [business.our_website] : []);
-              
-              return businessDemos.length > 0 && businessDemos.map((demo, index) => (
-                <div key={index} className="detail-item">
-                  <Globe size={18} />
-                  <div>
-                    <label>{index === 0 ? 'Demo' : `Demo ${index + 1}`}</label>
-                    <a href={demo} target="_blank" rel="noopener noreferrer">
-                      {demo}
-                    </a>
-                  </div>
-                </div>
-              ));
-            })()}
-
-            {business.opening_hours && (
-              <div className="detail-item">
-                <Calendar size={18} />
-                <div>
-                  <label>Opening Hours</label>
-                  <p>{business.opening_hours}</p>
-                </div>
+        <div className="detail-section">
+          <h3 className="section-title">Contact Information</h3>
+          <div className="tracking-section">
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Phone</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="(555) 123-4567"
+                  disabled={business.id.startsWith('search-')}
+                />
               </div>
-            )}
 
-            {business.latitude && business.longitude && (
-              <div className="detail-item">
-                <MapPin size={18} />
-                <div>
-                  <label>Location</label>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="business@example.com"
+                  disabled={business.id.startsWith('search-')}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="detail-section">
+          <h3 className="section-title">Address</h3>
+          <div className="tracking-section">
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label>Street Address</label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="123 Main St"
+                  disabled={business.id.startsWith('search-')}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>City</label>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City"
+                  disabled={business.id.startsWith('search-')}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>State</label>
+                <input
+                  type="text"
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  placeholder="State"
+                  maxLength={2}
+                  disabled={business.id.startsWith('search-')}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>ZIP Code</label>
+                <input
+                  type="text"
+                  value={zipCode}
+                  onChange={(e) => setZipCode(e.target.value)}
+                  placeholder="ZIP Code"
+                  disabled={business.id.startsWith('search-')}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="detail-section">
+          <h3 className="section-title">Additional Information</h3>
+          <div className="tracking-section">
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label>Opening Hours</label>
+                <input
+                  type="text"
+                  value={openingHours}
+                  onChange={(e) => setOpeningHours(e.target.value)}
+                  placeholder="Mo-Fr 09:00-17:00"
+                  disabled={business.id.startsWith('search-')}
+                />
+              </div>
+
+              {business.latitude && business.longitude && (
+                <div className="form-group full-width">
+                  <label>Location Coordinates</label>
                   <a
                     href={`https://www.openstreetmap.org/?mlat=${business.latitude}&mlon=${business.longitude}&zoom=15`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="location-link"
                   >
                     View on Map ({business.latitude.toFixed(6)}, {business.longitude.toFixed(6)})
                   </a>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
@@ -346,6 +469,74 @@ export default function BusinessDetailPage() {
               onDeleteEvent={handleDeleteEvent}
               canDelete={!business.id.startsWith('search-')}
             />
+          </div>
+        </div>
+
+        <div className="detail-section">
+          <h3 className="section-title">Tracking & Notes</h3>
+          <div className="tracking-section">
+            <div className="status-group">
+              <label>Status</label>
+              <div className="status-options">
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    name="status"
+                    value="none"
+                    checked={status === 'none'}
+                    onChange={(e) => setStatus(e.target.value)}
+                  />
+                  <span>No Status</span>
+                </label>
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    name="status"
+                    value="contacted"
+                    checked={status === 'contacted'}
+                    onChange={(e) => setStatus(e.target.value)}
+                  />
+                  <span>✓ Contacted</span>
+                </label>
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    name="status"
+                    value="creating-site"
+                    checked={status === 'creating-site'}
+                    onChange={(e) => setStatus(e.target.value)}
+                  />
+                  <span>🚀 Creating Site</span>
+                </label>
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    name="status"
+                    value="scheduled-meeting"
+                    checked={status === 'scheduled-meeting'}
+                    onChange={(e) => setStatus(e.target.value)}
+                  />
+                  <span>📅 Scheduled Meeting</span>
+                </label>
+              </div>
+            </div>
+
+            {trackingData?.updatedAt && (
+              <div className="tracking-date">
+                Last updated: {format(trackingData.updatedAt.toDate(), 'PPp')}
+              </div>
+            )}
+
+            <div className="notes-group">
+              <label htmlFor="notes">Notes</label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add notes about this business..."
+                rows={4}
+              />
+            </div>
           </div>
         </div>
 

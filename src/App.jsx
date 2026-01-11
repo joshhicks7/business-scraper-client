@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import BusinessDetailPage from './pages/BusinessDetailPage';
 import StatsPage from './pages/StatsPage';
+import CreateBusinessPage from './pages/CreateBusinessPage';
 import './App.css';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/stats" element={<StatsPage />} />
+          <Route path="/businesses/create" element={<CreateBusinessPage />} />
           <Route path="/business/:id" element={<BusinessDetailPage />} />
         </Routes>
       </Layout>

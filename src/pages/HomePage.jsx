@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import BusinessList from '../components/BusinessList';
-import CreateBusinessModal from '../components/CreateBusinessModal';
 import Notification from '../components/Notification';
 import { getAllBusinesses, getAllTrackingData } from '../services/firebaseService';
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [businesses, setBusinesses] = useState([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState([]);
   const [trackingData, setTrackingData] = useState({});
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -44,8 +44,7 @@ export default function HomePage() {
   const handleBusinessCreated = (business) => {
     setBusinesses(prev => [business, ...prev]);
     setFilteredBusinesses(prev => [business, ...prev]);
-    setShowCreateModal(false);
-      showNotification('Business created successfully!', 'success');
+    showNotification('Business created successfully!', 'success');
     loadBusinesses(); // Reload to get the business ID
   };
 
@@ -79,7 +78,7 @@ export default function HomePage() {
         </div>
         <button
           className="btn btn-primary"
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => navigate('/businesses/create')}
         >
           <Plus size={20} />
           Add Business
@@ -97,13 +96,6 @@ export default function HomePage() {
         onFilterChange={setFilteredBusinesses}
         allBusinesses={businesses}
       />
-
-      {showCreateModal && (
-        <CreateBusinessModal
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={handleBusinessCreated}
-        />
-      )}
 
       {notification && (
         <Notification

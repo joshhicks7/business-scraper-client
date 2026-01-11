@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { X, Save } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Save } from 'lucide-react';
 import { addBusiness } from '../services/firebaseService';
-import SearchableSelect from './SearchableSelect';
-import WebsiteList from './WebsiteList';
+import SearchableSelect from '../components/SearchableSelect';
+import WebsiteList from '../components/WebsiteList';
+import Notification from '../components/Notification';
 import { CATEGORIES } from '../utils/categories';
-import './CreateBusinessModal.css';
+import './CreateBusinessPage.css';
 
-export default function CreateBusinessModal({ onClose, onSuccess }) {
+export default function CreateBusinessPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     category: 'restaurant',
@@ -25,6 +28,12 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  const [notification, setNotification] = useState(null);
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -76,6 +85,7 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
     e.preventDefault();
 
     if (!validate()) {
+      showNotification('Please fix the errors in the form', 'error');
       return;
     }
 
@@ -108,30 +118,39 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
       };
 
       const businessId = await addBusiness(businessData);
-      const newBusiness = {
-        id: businessId,
-        ...businessData
-      };
-
-      onSuccess(newBusiness);
+      showNotification('Business created successfully!', 'success');
+      
+      // Navigate to the business detail page or back to home
+      setTimeout(() => {
+        navigate(`/business/${businessId}`);
+      }, 1000);
     } catch (error) {
       console.error('Error creating business:', error);
-      alert('Failed to create business. Please try again.');
+      showNotification('Failed to create business. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content create-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Create New Business</h2>
-          <button className="modal-close" onClick={onClose}>
-            <X size={24} />
+    <>
+      <div className="page-header">
+        <div>
+          <button
+            className="btn btn-secondary btn-icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft size={18} />
+            Back
           </button>
         </div>
+        <div>
+          <h1>Create New Business</h1>
+          <p>Add a new business to your database</p>
+        </div>
+      </div>
 
+      <div className="create-business-page">
         <form onSubmit={handleSubmit} className="create-form">
           <div className="form-section">
             <h3>Basic Information</h3>
@@ -329,8 +348,8 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
             </div>
           </div>
 
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)} disabled={saving}>
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
@@ -349,8 +368,15 @@ export default function CreateBusinessModal({ onClose, onSuccess }) {
           </div>
         </form>
       </div>
-    </div>
+
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+    </>
   );
 }
-
 
